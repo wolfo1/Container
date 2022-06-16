@@ -9,21 +9,23 @@ void errorHandler(const char* errorMessage)
 
 int newContainer(void* args)
 {
-    auto* container = (Container*)args;
-    if (container == nullptr)
-        errorHandler(ALLOC_ERR);
-    // create hostname
-    if (sethostname(container->hostName, strlen(container->hostName)) == -1)
-        errorHandler(SETHOST_ERR);
+    auto* container = (Container*) args;
     // change root directory
     if (chroot(container->rootDir) == -1)
         errorHandler(CHROOT_ERR);
     // go into root directory
-    if (chdir(container->rootDir) == -1)
+    if (chdir("/") == -1)
         errorHandler(CHDIR_ERR);
-    // create cgroup
-    if (mkdir("sys/fs/cgroup/pids", 0755) == -1)
-        errorHandler(MKDIR_ERR);
+    // create hostname
+    if (sethostname(container->hostName, strlen(container->hostName)) == -1)
+        errorHandler(SETHOST_ERR);
+    // create directories
+    const char* const dirs[] = {"sys/fs", "sys/fs/cgroup", "sys/fs/cgroup/pids"};
+    for (const char* dir : dirs)
+    {
+        if (mkdir(dir, 0755) == -1)
+            errorHandler(MKDIR_ERR);
+    }
     // write into procs, max and notify_on_release files
     std::ofstream procs;
     procs.open("/sys/fs/cgroup/pids/cgroup.procs");
@@ -31,7 +33,6 @@ int newContainer(void* args)
         errorHandler(OPEN_PROCS_ERR);
     procs << getpid();
     procs.close();
-
     std::ofstream pidMax;
     pidMax.open("/sys/fs/cgroup/pids/pids.max");
     if(!pidMax)
@@ -46,8 +47,10 @@ int newContainer(void* args)
     notifyOnRelease << 1;
     notifyOnRelease.close();
     // mount procs
-    if (mount("proc", "/proc", "proc", 0, 0) == -1)
+    if (mount("proc", "/proc", "proc", 0, 0) != 0)
+    {
         errorHandler(MOUNT_ERR);
+    }
     if (execv(container->programArgs[0], container->programArgs) == -1)
         errorHandler(CLONE_ERR);
     return 0;
@@ -56,14 +59,14 @@ int newContainer(void* args)
 int newProcess(int argc, char** argv)
 {
     // allocate a new stack
-    void* containerStack = malloc(STACK_SIZE);
+    char* containerStack = new (std::nothrow) char[STACK_SIZE];
     if (containerStack == nullptr)
         errorHandler(ALLOC_ERR);
     // create a new container
     auto* container = new Container {argv, argc};
-    int pid = clone(newContainer, (char*)containerStack + STACK_SIZE,
+    int pid = clone(newContainer, containerStack + STACK_SIZE,
                     CLONE_NEWPID | CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWNET,
-                    container->programArgs);
+                    container);
     if (pid == -1)
     {
         free(containerStack);
@@ -78,7 +81,7 @@ int newProcess(int argc, char** argv)
     }
     // delete directories
     std::error_code ec;
-    std::experimental::filesystem::remove_all(*(container->processFileSystem) + "/sys/fs", ec);
+    std::experimental::filesystem::remove_all(container->processFileSystem + "/sys/fs", ec);
     if (ec)
     {
         free(containerStack);
@@ -86,7 +89,7 @@ int newProcess(int argc, char** argv)
         errorHandler(REMOVE_DIR_ERR);
     }
     // unmount
-    std::string procFilepath = *(container->processFileSystem) + "/procFilepath";
+    std::string procFilepath = container->processFileSystem + "/procFilepath";
     if (umount(procFilepath.c_str()) != 0)
     {
         free(containerStack);

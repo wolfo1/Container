@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <list>
 #include <experimental/filesystem>
+
 #define STACK_SIZE 8192
 
 #define MOUNT_ERR "system error: could not mount proc.\n"
@@ -28,15 +29,16 @@
 typedef struct Container {
     char* hostName;
     char* rootDir;
-    long numOfProcesses;
-    std::string* processFileSystem;
+    char* numOfProcesses;
+    std::string processFileSystem;
     char** programArgs;
+
     Container(char** argv, int argc)
     {
         this->hostName = argv[1];
         this->rootDir = argv[2];
-        this->numOfProcesses = strtol(argv[3], NULL, 10);
-        this->processFileSystem = new std::string(argv[4]);
+        this->numOfProcesses = argv[3];
+        this->processFileSystem = std::string(argv[4]);
         // create a new array for program arguments
         programArgs = new char*[argc - 3];
         for (int i = 0; i < argc - 3; i++)
@@ -45,13 +47,16 @@ typedef struct Container {
         }
         programArgs[argc - 4] = (char *) 0;
     }
+
     ~Container()
     {
         delete[] programArgs;
-        delete processFileSystem;
     }
 } Container;
 
-
+void errorHandler(const char* errorMessage);
+int newContainer(void* args);
+int newProcess(int argc, char** argv);
+int get_connection(int s);
 
 #endif //_CONTAINER_H_
