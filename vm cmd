@@ -1,0 +1,6 @@
+rundeb10 -cow /cs/course/current/os/ex5/ex5-deb10.qcow2 -bind /cs/usr/omri.wolf1/CLionProjects/Ex5OS -root -snapshot -- -net user,hostfwd=tcp:127.0.0.1:2222-:22 -net nic,model=virtio
+
+
+
+
+
