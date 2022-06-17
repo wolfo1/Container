@@ -46,11 +46,19 @@ typedef struct Container {
             programArgs[i] = *(argv + i + 4);
         }
         programArgs[argc - 4] = (char *) 0;
+        //this->programArgs = new char*[argc - 3];
+        //this->programArgs[0] = argv[4];
+        //for(int i = 5; i < argc; i ++)
+        //{
+        //	this->programArgs[i-4] = argv[i];
+        //}
+        //this->programArgs[argc-4] = (char*)0;
     }
 
     ~Container()
     {
-        delete[] programArgs;
+        //delete[] programArgs;
+        free(programArgs);
     }
 } Container;
 

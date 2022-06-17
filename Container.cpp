@@ -20,11 +20,13 @@ int newContainer(void* args)
     if (sethostname(container->hostName, strlen(container->hostName)) == -1)
         errorHandler(SETHOST_ERR);
     // create directories
-    const char* const dirs[] = {"sys/fs", "sys/fs/cgroup", "sys/fs/cgroup/pids"};
+    const char* const dirs[] = {"/sys/fs", "/sys/fs/cgroup", "/sys/fs/cgroup/pids"};
     for (const char* dir : dirs)
     {
         if (mkdir(dir, 0755) == -1)
+        {
             errorHandler(MKDIR_ERR);
+        }
     }
     // write into procs, max and notify_on_release files
     std::ofstream procs;
@@ -44,14 +46,12 @@ int newContainer(void* args)
     notifyOnRelease.open("/sys/fs/cgroup/pids/notify_on_release");
     if(!notifyOnRelease)
         errorHandler(OPEN_NOTIFY_ERR);
-    notifyOnRelease << 1;
+    notifyOnRelease << "1";
     notifyOnRelease.close();
     // mount procs
     if (mount("proc", "/proc", "proc", 0, 0) != 0)
-    {
-        errorHandler(MOUNT_ERR);
-    }
-    if (execv(container->programArgs[0], container->programArgs) == -1)
+    	errorHandler(MOUNT_ERR);
+    if (execv(container->processFileSystem.c_str(), container->programArgs) == -1)
         errorHandler(CLONE_ERR);
     return 0;
 }
@@ -64,41 +64,40 @@ int newProcess(int argc, char** argv)
         errorHandler(ALLOC_ERR);
     // create a new container
     auto* container = new Container {argv, argc};
-    int pid = clone(newContainer, containerStack + STACK_SIZE,
-                    CLONE_NEWPID | CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWNET,
-                    container);
+    int pid = clone(newContainer, containerStack + STACK_SIZE, CLONE_NEWPID|CLONE_NEWUTS|CLONE_NEWNS|SIGCHLD, container);
     if (pid == -1)
     {
         free(containerStack);
         delete container;
         errorHandler(CLONE_ERR);
     }
-    if(wait(NULL) != 0)
+    if(wait(nullptr) < 0)
     {
-        free(containerStack);
+        delete containerStack;
         delete container;
         errorHandler(WAIT_ERR);
     }
     // delete directories
+    std::string rootDirStr = container->rootDir;
     std::error_code ec;
-    std::experimental::filesystem::remove_all(container->processFileSystem + "/sys/fs", ec);
+    std::experimental::filesystem::remove_all(rootDirStr + "/sys/fs", ec);
     if (ec)
     {
-        free(containerStack);
+        delete containerStack;
         delete container;
         errorHandler(REMOVE_DIR_ERR);
     }
     // unmount
-    std::string procFilepath = container->processFileSystem + "/procFilepath";
+    std::string procFilepath = rootDirStr + "/proc";
     if (umount(procFilepath.c_str()) != 0)
     {
-        free(containerStack);
+        delete containerStack;
         delete container;
         errorHandler(MOUNT_ERR);
     }
     // free memory
     delete container;
-    free(containerStack);
+    delete containerStack;
     return 0;
 }
 
