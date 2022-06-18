@@ -12,8 +12,14 @@
 #include <experimental/filesystem>
 
 #define STACK_SIZE 8192
+#define FAILURE -1
+#define SUCCESS 0
+#define DIR_MODE 0755
+#define MIN_ARG_NUM 5
+#define NOTIFY_TRUE "1"
 
 #define MOUNT_ERR "system error: could not mount proc.\n"
+#define UNMOUNT_ERR "system error: could not unmount proc.\n"
 #define CLONE_ERR "system error: clone system call failed.\n"
 #define WAIT_ERR "system error: wait system call failed.\n"
 #define ALLOC_ERR "system error: malloc failed to allocate memory.\n"
@@ -30,7 +36,7 @@ typedef struct Container {
     char* hostName;
     char* rootDir;
     char* numOfProcesses;
-    std::string processFileSystem;
+    char* processFileSystem;
     char** programArgs;
 
     Container(char** argv, int argc)
@@ -38,7 +44,7 @@ typedef struct Container {
         this->hostName = argv[1];
         this->rootDir = argv[2];
         this->numOfProcesses = argv[3];
-        this->processFileSystem = std::string(argv[4]);
+        this->processFileSystem = argv[4];
         // create a new array for program arguments
         programArgs = new char*[argc - 3];
         for (int i = 0; i < argc - 3; i++)
@@ -46,25 +52,36 @@ typedef struct Container {
             programArgs[i] = *(argv + i + 4);
         }
         programArgs[argc - 4] = (char *) 0;
-        //this->programArgs = new char*[argc - 3];
-        //this->programArgs[0] = argv[4];
-        //for(int i = 5; i < argc; i ++)
-        //{
-        //	this->programArgs[i-4] = argv[i];
-        //}
-        //this->programArgs[argc-4] = (char*)0;
     }
 
     ~Container()
     {
-        //delete[] programArgs;
-        free(programArgs);
+        delete[] programArgs;
     }
 } Container;
 
+/**
+ * called if a system call was resulted in an error. Prints a relevant error msg
+ * from errno and exits with EXIT_FAILURE.
+ * @param errorMessage the msg to print.
+ */
 void errorHandler(const char* errorMessage);
+/**
+ * the code for a new container. creates a file system, mounts proc and runs
+ * the target program with included variables.
+ * @param args should be converted to Container struct.
+ * @return 0 on success, else exits with EXIT_FAILURE.
+ */
 int newContainer(void* args);
+/**
+ * creates a new process and child containers from paramaters given by user in
+ * command line.
+ * @param argc number of parameters user gave. argc - 3 is num of variables for
+ *              the target program.
+ * @param argv <program_name> <new_hostname> <new_filesystem_directory> <num_processes>
+                <path_to_program_to_run_within_container> <[Optional]args_for_program>
+ * @return 0 on success, else exits with EXIT_FAILURE.
+ */
 int newProcess(int argc, char** argv);
-int get_connection(int s);
 
 #endif //_CONTAINER_H_

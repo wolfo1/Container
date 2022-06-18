@@ -3,5 +3,5 @@ project(container)
 
 set(CMAKE_CXX_STANDARD 14)
 link_libraries(stdc++fs)
-add_executable(container Container.cpp)
+add_executable(container Container.cpp Container.h)
 add_executable(socket Socket.cpp Socket.h)
