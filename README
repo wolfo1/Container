@@ -3,10 +3,13 @@ Omri Wolf (204867881), Gabi Album (316563949)
 EX: 5
 
 FILES:
+README -- YOU ARE HERE!
 Container.cpp -- The source code for the Container.
 Container.h -- Header file for Container.cpp
 Socket.cpp -- The source code for the Socket.
 Socket.h -- Header file for Socket.cpp.
+Makefile -- makefile to compile container.o and sockets.o with the cmd "make".
+
 
 REMARKS:
 
