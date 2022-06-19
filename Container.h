@@ -66,6 +66,7 @@ typedef struct Container {
  * @param errorMessage the msg to print.
  */
 void errorHandler(const char* errorMessage);
+
 /**
  * the code for a new container. creates a file system, mounts proc and runs
  * the target program with included variables.
@@ -73,6 +74,7 @@ void errorHandler(const char* errorMessage);
  * @return 0 on success, else exits with EXIT_FAILURE.
  */
 int newContainer(void* args);
+
 /**
  * creates a new process and child containers from paramaters given by user in
  * command line.

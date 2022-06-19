@@ -14,12 +14,11 @@
 #define CLIENT_ARG_NUM 4
 #define SERVER_ARG_NUM 3
 #define SUCCESS 0
-#define MAX_CONNECTIONS 3
+#define MAX_CONNECTIONS 5
 #define SERVER_TYPE_ARG "server"
 #define CLIENT_TYPE_ARG "client"
 
-#define USAGE_ERR "system error: Usage: ./sockets client <port><terminal_command_to_run>.\nServer Usage: ./sockets server <port>\n"
-#define READ_ERR "system error: Reading data failed.\n"
+#define USAGE_ERR "system error: Usage: ./sockets client <port> <terminal_command_to_run>.\nServer Usage: ./sockets server <port>\n"
 #define WRITE_ERR "system error: Writing data failed.\n"
 #define CONNECT_ERR "system error: Connecting to socket failed.\n"
 #define SOCKET_ERR "system error: Failed to create socket.\n"
@@ -31,11 +30,19 @@
 #define RUN_CMD_ERR "system error: Failed to run client's command.\n"
 
 /**
+ * called if a system call was resulted in an error. Prints a relevant error msg
+ * from errno and exits with EXIT_FAILURE.
+ * @param errorMessage the msg to print.
+ */
+void errorHandler(const char* errorMessage);
+
+/**
  * establishes a connection to a server
  * @param port The port to connect to
  * @return The connected socket
  */
 int establish(unsigned short port);
+
 /**
  * reads data from a socket
  * @param hostname Hostname of the servera
@@ -43,6 +50,7 @@ int establish(unsigned short port);
  * @return  The connected socket
  */
 int call_socket(char *hostname, unsigned short port);
+
 /**
  * reads data from a socket
  * @param sock  The socket to read from
@@ -51,6 +59,7 @@ int call_socket(char *hostname, unsigned short port);
  * @return How many bytes were read
  */
 int read_data(int sock, char *buf, int n);
+
 /**
  * writes data to a socket
  * @param sock The socket to write to
@@ -59,18 +68,21 @@ int read_data(int sock, char *buf, int n);
  * @return How many bytes were written
  */
 int write_data(int sock, char* buf, int n);
+
 /**
  * Get's connection if there is one
  * @param sock The socket to get connection from
  * @return File descriptor of the accepted socket
  */
 int getConnection(int sock);
+
 /**
  * Runs a command on a server
  * @param port The port to connect to
- * @return None
+ * @return doesn't return (keep running continuously)
  */
 [[noreturn]] int runServer(unsigned short port);
+
 /**
  * Runs a command on a client
  * @param port The port to connect to

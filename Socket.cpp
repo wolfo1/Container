@@ -76,9 +76,9 @@ int read_data(int sock, char *buf, int n)
             buf += br;
         }
         if (br < 1)
-            return -1;
+            return br;
     }
-    return(bcount);
+    return bcount;
 }
 
 int write_data(int sock, char* buf, int n)
@@ -113,6 +113,7 @@ int runServer(unsigned short port)
 {
     char buf[BUFFER_LENGTH + 1];
     int sock = establish(port);
+    // keep running server indefinitely, listen to clients and run commands.
     while(true)
     {
         int connectedSocket = getConnection(sock);
@@ -130,6 +131,7 @@ int runClient(unsigned short port, char *cmdToRun)
     if (gethostname(hostname, BUFFER_LENGTH) != SUCCESS)
         errorHandler(HOSTNAME_ERR);
     int socketNum = call_socket(hostname, port);
+    // write command to server and close connection
     write_data(socketNum, cmdToRun, strlen(cmdToRun));
     close(socketNum);
     return SUCCESS;
@@ -142,13 +144,15 @@ int main(int argc, char* argv[])
         errorHandler(USAGE_ERR);
     char *type = argv[1];
     unsigned short port = std::atoi(argv[2]);
-    if (argc >= CLIENT_ARG_NUM)
+    // create a client
+    if (argc == CLIENT_ARG_NUM)
     {
         if (strcmp(type, CLIENT_TYPE_ARG) != SUCCESS)
             errorHandler(USAGE_ERR);
         char *cmdToRun = argv[3];
         runClient(port, cmdToRun);
     }
+    // create a server
     else if (argc == SERVER_ARG_NUM)
     {
         if (strcmp(type, SERVER_TYPE_ARG) != SUCCESS)
