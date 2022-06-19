@@ -64,11 +64,11 @@ int call_socket(char *hostname, unsigned short port)
 
 int read_data(int sock, char *buf, int n)
 {
-    int bcount;       /* counts bytes read */
-    int br;               /* bytes read this pass */
+    int bcount;
+    int br;
     bcount= 0; br= 0;
     while (bcount < n)
-    { /* loop until full buffer */
+    {
         br = read(sock, buf, n - bcount);
         if (br > 0)
         {
@@ -76,7 +76,7 @@ int read_data(int sock, char *buf, int n)
             buf += br;
         }
         if (br < 1)
-            errorHandler(READ_ERR);
+            return -1;
     }
     return(bcount);
 }
@@ -138,11 +138,11 @@ int runClient(unsigned short port, char *cmdToRun)
 // main function
 int main(int argc, char* argv[])
 {
-    if (argc < CLIENT_ARG_NUM)
+    if (argc < SERVER_ARG_NUM)
         errorHandler(USAGE_ERR);
     char *type = argv[1];
     unsigned short port = std::atoi(argv[2]);
-    if (argc == CLIENT_ARG_NUM)
+    if (argc >= CLIENT_ARG_NUM)
     {
         if (strcmp(type, CLIENT_TYPE_ARG) != SUCCESS)
             errorHandler(USAGE_ERR);
