@@ -30,13 +30,53 @@
 #define SOCKNAME_ERR "system error: Failed to get socketname.\n"
 #define RUN_CMD_ERR "system error: Failed to run client's command.\n"
 
+/**
+ * establishes a connection to a server
+ * @param port The port to connect to
+ * @return The connected socket
+ */
 int establish(unsigned short port);
+/**
+ * reads data from a socket
+ * @param hostname Hostname of the servera
+ * @param port  The port to connect to
+ * @return  The connected socket
+ */
 int call_socket(char *hostname, unsigned short port);
+/**
+ * reads data from a socket
+ * @param sock  The socket to read from
+ * @param buf The buffer to read into
+ * @param n Amount of bytes to read
+ * @return How many bytes were read
+ */
 int read_data(int sock, char *buf, int n);
+/**
+ * writes data to a socket
+ * @param sock The socket to write to
+ * @param buf The buffer to write from
+ * @param n Amount of bytes to write
+ * @return How many bytes were written
+ */
 int write_data(int sock, char* buf, int n);
+/**
+ * Get's connection if there is one
+ * @param sock The socket to get connection from
+ * @return File descriptor of the accepted socket
+ */
 int getConnection(int sock);
-
+/**
+ * Runs a command on a server
+ * @param port The port to connect to
+ * @return None
+ */
 [[noreturn]] int runServer(unsigned short port);
+/**
+ * Runs a command on a client
+ * @param port The port to connect to
+ * @param cmdToRun The command to run
+ * @return returns 0 if successful
+ */
 int runClient(unsigned short port, char* cmdToRun);
 
 #endif //CONTAINER_SOCKET_H
